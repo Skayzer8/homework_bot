@@ -51,8 +51,7 @@ def get_api_answer(current_timestamp):
     Возвращает ответ API, преобразовав его из формата JSON
     к типам данных Python.
     """
-    timestamp = 0
-    # current_timestamp
+    timestamp = current_timestamp
     params = {'from_date': timestamp}
     try:
         homework_statuses = requests.get(
