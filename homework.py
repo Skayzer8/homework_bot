@@ -10,10 +10,13 @@ from dotenv import load_dotenv
 load_dotenv()
 logging.basicConfig(
     level=logging.DEBUG,
-    filename='main.log',
-    format='%(funcName)s, %(lineno)s, %(levelname)s, %(message)s',
-    filemode='w'
-)
+    format='%(asctime)s, %(funcName)s, %(levelname)s, %(message)s',
+    handlers=[logging.FileHandler(
+        'main.log',
+        mode='w',
+        encoding='UTF-8'),
+        logging.StreamHandler()])
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -48,7 +51,8 @@ def get_api_answer(current_timestamp):
     Возвращает ответ API, преобразовав его из формата JSON
     к типам данных Python.
     """
-    timestamp = current_timestamp
+    timestamp = 0
+    # current_timestamp
     params = {'from_date': timestamp}
     try:
         homework_statuses = requests.get(
@@ -119,6 +123,8 @@ def main():
     """Основная логика работы бота."""
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
+    new_error_message = ''
+    new_message = ''
     if not check_tokens():
         logger.critical('Проверка наличия токенов провалена')
         raise Exception('Проверка наличия токенов провалена')
@@ -128,13 +134,17 @@ def main():
             current_timestamp = response.get('current_date')
             homework = check_response(response)
             message = parse_status(homework)
-            send_message(bot, message)
-            time.sleep(RETRY_TIME)
+            if message != new_message:
+                send_message(bot, message)
+                new_message = message
+                time.sleep(RETRY_TIME)
         except Exception as error:
             logger.error(error)
             error_message = str(error)
-            send_message(bot, error_message)
-            time.sleep(RETRY_TIME)
+            if error_message != new_error_message:
+                send_message(bot, error_message)
+                new_error_message = error_message
+        time.sleep(RETRY_TIME)
 
 
 if __name__ == '__main__':
